@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Source') {
+            steps {
+                sh "GIT_CLONE_COMMAND"
+            }
+        }
+        stage('Build') {
+            steps {
+                sh "GO_BUILD_COMMAND"
+            }
+        }
+        stage('Package') {
+            steps {
+                sh "CREATE_PACKAGE_FOLDER_FOR_BUILD"
+                sh "COPY_BUILT_APPLICATION_IN_PACKAGE_FOLDER"
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
