@@ -15,10 +15,11 @@ pipeline {
         stage('Test') {
             steps {
                 sh '''
-				    set +e
-                    EXECUTE_GO_TESTS
+                    set +e
+                    go test ./... COVERAGE_PROFILE_ARGUMENT -v > test_output.txt
                     EXIT_CODE=$?
-                    GENERATE_JUNIT_REPORT
+                    go-junit-report < test_output.txt > report.xml
+                    HTML_TEST_COVERAGE_COMMAND
                     exit $EXIT_CODE
                 ''' 
             }		            
@@ -33,7 +34,17 @@ pipeline {
     
     post {
         always {
-            // JUNIT_REPORT
+            junit 'report.xml'
+            publishHTML([
+                allowMissing: false, 
+                alwaysLinkToLastBuild: true, 
+                keepAll: true, 
+                reportDir: '.', 
+                reportFiles: 'coverage.html', 
+                reportName: 'Go Test Coverage', 
+                reportTitles: 'Go Test Coverage', 
+                useWrapperFileDirectly: true]
+            )      
             cleanWs()
         }
     }
