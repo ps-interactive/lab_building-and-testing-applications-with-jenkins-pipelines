@@ -4,36 +4,24 @@ pipeline {
     stages {
         stage('Source') {
             steps {
-                sh "git clone file:///shared/repo ."
+                sh "GIT_CLONE_COMMAND"
             }
         }
         stage('Build') {
             steps {
-                sh "go build main.go"
+                sh "GO_BUILD_COMMAND"
             }
-        }
-        stage('Test') {
-            steps {
-                sh '''
-				    set +e
-                    EXECUTE_GO_TESTS
-                    EXIT_CODE=$?
-                    GENERATE_JUNIT_REPORT
-                    exit $EXIT_CODE
-                ''' 
-            }		            
         }
         stage('Package') {
             steps {
-                sh "mkdir -p /shared/packages/${BUILD_ID}"
-                sh "cp main /shared/packages/${BUILD_ID}/main"
+                sh "CREATE_PACKAGE_FOLDER_FOR_BUILD"
+                sh "COPY_BUILT_APPLICATION_IN_PACKAGE_FOLDER"
             }
         }
     }
     
     post {
         always {
-            // JUNIT_REPORT
             cleanWs()
         }
     }

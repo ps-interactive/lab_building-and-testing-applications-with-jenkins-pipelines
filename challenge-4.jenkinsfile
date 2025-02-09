@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                sh "go build main.go"
+            }
+        }
+        stage('Test') {
+            steps {
+		            sh '''
+				            set +e
+				            go test ./... -coverprofile=coverage.out -v > test_output.txt
+                    EXIT_CODE=$?
+                    go-junit-report < test_output.txt > report.xml
+                    go tool cover -html=coverage.out -o coverage.html || true
+                    exit $EXIT_CODE
+		            ''' 
+            }		            
+        }
+        stage('Package') {
+            steps {
+                sh "mkdir -p /shared/packages/${BUILD_ID}"
+                sh "cp main /shared/packages/${BUILD_ID}/main"
+            }
+        }
+    }
+    
+    post {
+        always {
+		        junit 'report.xml'
+		        publishHTML([
+		            allowMissing: false, 
+		            alwaysLinkToLastBuild: true, 
+		            keepAll: true, 
+		            reportDir: '.', 
+		            reportFiles: 'coverage.html', 
+		            reportName: 'Go Test Coverage', 
+		            reportTitles: 'Go Test Coverage', 
+		            useWrapperFileDirectly: true])      
+            cleanWs()
+        }
+    }
+}
